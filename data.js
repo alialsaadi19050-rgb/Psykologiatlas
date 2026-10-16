@@ -1568,3 +1568,46 @@ window.ATLAS.tricks = {
   normer: "<p><b>Norm</b> = det du bör göra. · <b>Reciprocitet</b> = ge och ta, quid pro quo, den gyllene regeln. · <b>Fler åskådare = mindre hjälp</b> (Darley & Latané, Kitty Genovese 1964, 38 vittnen). · <b>Prosocialt</b> = all hjälp, <b>altruism</b> = den osjälviska formen, <b>antisocialt</b> = motsatsen.</p>",
   perspektiv: "<p><b>Bio</b> = medfött: gruppen överlevde, empatin finns i generna. · <b>Behaviorism</b> = inlärt: förstärkning, Beama 43 % mot 25 %. · <b>Kognition</b> = tankar: självschema och kognitiv dissonans (Festinger 1957). · Alla tre tillsammans = <b>helhetssyn</b>.</p>"
 };
+
+/* Den röda tråden på sidan Studier: teori → studie → slutsats. Kopplingarna följer bokens text. */
+window.ATLAS.thread = [
+  {
+    ch: "identitet", q: "Går alla tonåringar igenom en identitetskris?",
+    steps: [
+      { type: "teori", title: "Erik H. Erikson: psykosocial utveckling", text: "Vi utvecklas genom kriser. I den <b>femte fasen (13–19 år)</b> blir identiteten fast genom krisen <b>identitet eller rollförvirring</b>. Erikson såg krisen hos ungdomar i två ursprungsfolk i USA.", src: "s. 174–175" },
+      { link: "Stämmer det? Kidwell testade teorin", rel: "stödjer", study: "kidwell" },
+      { link: "Men Rutter kom fram till något annat", rel: "säger emot", study: "rutter" },
+      { type: "slutsats", text: "Det finns få studier som stödjer Erikson, och teorin kritiseras för <b>fasta faser</b> och <b>strikt åldersindelning</b>.", src: "s. 175" },
+      { link: "Därför byggde Marcia vidare", type: "teori", title: "James Marcia: fyra identitetsstatusar", text: "Kris, utforskning och engagemang ger fyra statusar: <b>förutfattad, identitetsförvirring, moratorium och etablerad</b>. De kommer <b>inte i bestämd ordning</b> och är inte bestående, så alla behöver inte ha samma kris.", src: "s. 176–177" },
+      { link: "Klimstra testade Erikson och Marcia", rel: "stödjer", study: "klimstra" },
+      { type: "slutsats", text: "Att testa roller och hitta engagemang verkar vara något 12–16-åringar håller på med. Ungdomar med etablerad identitet har fler engagemang och högre självförtroende.", src: "s. 177–178" }
+    ]
+  },
+  {
+    ch: "anknytning", q: "Påverkar de första banden resten av livet?",
+    steps: [
+      { type: "teori", title: "John Bowlby: anknytningsteorin", text: "Spädbarn är genom evolutionen hjälplösa men söta, och föräldrar har medfödda mekanismer för att ta hand om dem. Anknytningen följer <b>fyra stadier</b>, och en god anknytning ger goda <b>relationsscheman</b> inför senare relationer.", src: "s. 179" },
+      { link: "Ainsworth gjorde teorin mätbar", rel: "bygger vidare", study: "ainsworth" },
+      { type: "slutsats", text: "Fyra stilar: <b>A undvikande, B trygg, C ambivalent, D oorganiserad</b> (D lades till av Main och Solomon 1986). Trygga barn har ett mognare samspel med jämnåriga.", src: "s. 180–181" },
+      { link: "Följer stilen med in i vuxenlivet?", rel: "stödjer", study: "hazan" },
+      { type: "slutsats", text: "Anknytningsstilen från barndomen kan påverka relationerna som vuxen. Tråden går alltså från Bowlbys teori, via Ainsworths observationer, till vuxnas kärleksrelationer.", src: "s. 182" }
+    ]
+  },
+  {
+    ch: "ledarskap", q: "Vilket ledarskap fungerar bäst för gruppen?",
+    steps: [
+      { type: "teori", title: "Från \"född till ledare\" till situationsanpassat", text: "Först trodde man att ledare var <b>födda till ledare</b> (intelligenta och talföra), men det fick inget stort stöd. Sedan kom de klassiska stilarna (<b>auktoritär, demokratisk, låt-gå</b>) och Hersey och Blanchards <b>situationsanpassade ledarskap</b>.", src: "s. 191–193" },
+      { link: "Vad säger dagens forskning?", rel: "svarar", study: "tafvelin" },
+      { type: "slutsats", text: "Det <b>transformerande ledarskapet</b> (förebild, vision, nya idéer, omtanke) ger både välmående och bättre prestation. En destruktiv ledare får medarbetarna att må dåligt.", src: "s. 193–194" }
+    ]
+  },
+  {
+    ch: "perspektiv", q: "Varför hjälper vi andra?",
+    steps: [
+      { type: "händelse", title: "Kitty Genovese, New York 1964", text: "38 grannar hörde eller såg brottet, men ingen ingrep. Darley och Latané förklarade det med <b>ansvarsspridning</b>: ju fler åskådare, desto mindre hjälp. Fallet fick psykologer att forska om när och varför vi hjälper.", src: "s. 196–197" },
+      { link: "Tre möjliga förklaringar", type: "teori", title: "Medfött, inlärt eller tankar?", text: "<b>Biologiskt:</b> hjälpsamhet är nedärvd eftersom gruppen överlevde. <b>Behavioristiskt:</b> den är inlärd genom förstärkning. <b>Kognitivt:</b> vi hjälper för att stärka vårt självschema och undvika kognitiv dissonans.", src: "s. 198–200" },
+      { link: "Kan man lära sig att hjälpa?", rel: "stödjer inlärning", study: "beama" },
+      { type: "slutsats", text: "Prosocialt beteende verkar komma från alla tre: behovet att överleva som grupp, inlärning och våra tankar. Det kallas en <b>helhetssyn</b>, och prosocialt beteende bidrar till ett socialt hållbart samhälle.", src: "s. 200" }
+    ]
+  }
+];

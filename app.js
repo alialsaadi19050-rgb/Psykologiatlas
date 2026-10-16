@@ -98,7 +98,7 @@
       <h1>Psykologi<em>atlas</em></h1>
       <p class="lead">Sex kapitel, alla studier och alla begrepp på ett ställe. Välj ett kapitel nedan eller i flikarna högst upp. Varje kapitel har sin egen meny, klickbara figurer, flashcards, quiz och provfrågor med modellsvar.</p>
       <div class="cards">${cards}
-        <a class="card c-alla" style="--i:${READY.length}" href="#/studier"><span class="mono">Alla kapitel · ${nStud} studier</span><b class="t">Studier</b><p>Alla studier som kort: syfte, försökspersoner, metod, resultat och hur du värderar dem.</p><span class="go">Öppna →</span></a>
+        <a class="card c-alla" style="--i:${READY.length}" href="#/studier"><span class="mono">Alla kapitel · ${nStud} studier</span><b class="t">Studiernas röda tråd</b><p>Alla studier i den ordning de hänger ihop: teori, sedan studier som stödjer eller säger emot, och sist slutsatsen.</p><span class="go">Öppna →</span></a>
         <a class="card c-alla" style="--i:${READY.length + 1}" href="#/begrepp"><span class="mono">Flashcards · hela atlasen</span><b class="t">Alla begrepp</b><p>Alla ${ALL_TERMS.length} begrepp som flashcards och sökbar ordlista. Välj kapitel eller kör allt.</p>
           <span class="prog"><span class="bar"><i style="width:${pct(ALL_TERMS)}%"></i></span>${pct(ALL_TERMS)} %</span><span class="go">Öppna →</span></a>
       </div>
@@ -398,15 +398,28 @@
     $$("[data-c]", el).forEach(c => c.addEventListener("change", () => { S.crit[c.dataset.c] = c.checked; save(); }));
   }
 
-  /* ---------- Studier ---------- */
+  /* ---------- Studier: en röd tråd från teori till studie till slutsats ---------- */
   function studiesPage(filter) {
-    const ids = Object.keys(A.studies).filter(k => chap(A.studies[k].ch) && chap(A.studies[k].ch).ready);
-    const chs = READY.filter(c => ids.some(k => A.studies[k].ch === c.id));
-    const shown = ids.filter(k => !filter || A.studies[k].ch === filter);
-    app.innerHTML = `<div class="page"><span class="mono">Psykologi · alla kapitel</span><h1>Alla <em>studier</em></h1>
-      <p class="lead">På provet ska du kunna beskriva studierna och värdera dem. Öppna "Värdera studien" på varje kort.</p>
-      <div class="chips"><a class="chip ${!filter ? "on" : ""}" href="#/studier">Alla</a>${chs.map(c => `<a class="chip c-${c.id} ${filter === c.id ? "on" : ""}" href="#/studier/${c.id}"><i></i>${esc(c.short)}</a>`).join("")}</div>
-      ${shown.map(k => `<div class="c-${A.studies[k].ch}">${studyCard(A.studies[k])}<a class="mono" href="#/k/${A.studies[k].ch}/las/${A.studies[k].sec}">Läs i kapitlet →</a></div>`).join("")}</div>`;
+    const groups = (A.thread || []).filter(g => chap(g.ch) && chap(g.ch).ready);
+    const shown = groups.filter(g => !filter || g.ch === filter);
+    const step = (st, g) => {
+      const link = st.link ? `<div class="t-link"><span>${esc(st.link)}</span>${st.rel ? `<b class="rel">${esc(st.rel)}</b>` : ""}</div>` : "";
+      if (st.study) {
+        const s = A.studies[st.study];
+        return `${link}<div class="t-node t-study">${studyCard(s)}<a class="mono" href="#/k/${s.ch}/las/${s.sec}">Läs i kapitlet →</a></div>`;
+      }
+      return `${link}<div class="t-node t-${st.type === "slutsats" ? "end" : st.type === "händelse" ? "event" : "theory"}">
+        <span class="mono">${st.type === "slutsats" ? "Slutsats" : st.type === "händelse" ? "Händelse" : "Teori"} · ${esc(st.src)}</span>
+        ${st.title ? `<b>${esc(st.title)}</b>` : ""}<p>${st.text}</p></div>`;
+    };
+    app.innerHTML = `<div class="page c-ledarskap"><span class="mono">Psykologi · alla kapitel · ${Object.keys(A.studies).length} studier</span><h1>Studiernas <em>röda tråd</em></h1>
+      <p class="lead">Varje studie svarar på en fråga om en teori. Följ den röda linjen: först teorin, sedan studierna som stödjer den, säger emot den eller bygger vidare, och sist slutsatsen. Så kan du också bygga upp ett provsvar.</p>
+      <div class="chips"><a class="chip ${!filter ? "on" : ""}" href="#/studier">Hela tråden</a>${groups.map(g => `<a class="chip c-${g.ch} ${filter === g.ch ? "on" : ""}" href="#/studier/${g.ch}"><i></i>${esc(chap(g.ch).short)}</a>`).join("")}</div>
+      ${shown.map((g, i) => `<section class="thread c-${g.ch}">
+        <div class="t-q"><span class="mono">Fråga ${groups.indexOf(g) + 1} · ${esc(chap(g.ch).short)}</span><h2>${esc(g.q)}</h2></div>
+        <div class="t-line">${g.steps.map(st => step(st, g)).join("")}</div>
+      </section>${!filter && i < shown.length - 1 ? `<div class="t-bridge">↓ <span>Nästa fråga</span></div>` : ""}`).join("")}
+      <p class="note">Ordningen och övergångarna ("stödjer", "säger emot", "bygger vidare") är min sammanställning av hur boken kopplar ihop teorierna och studierna. Fakta i varje kort kommer från boken.</p></div>`;
   }
 
   /* ---------- Alla begrepp ---------- */
