@@ -198,25 +198,43 @@ details p{margin:.5rem 0 0}
 .seg button.on{background:var(--ink);color:var(--bg)}
 .score{font-family:var(--f-display);font-size:1.3rem;font-weight:800}
 
-/* Flashcards (3D) */
-.fc-meta{display:flex;justify-content:space-between;color:var(--muted);font-size:.9rem;flex-wrap:wrap;gap:6px}
-.card3d{perspective:1400px;margin:14px 0 8px}
-.flash{display:grid;min-height:260px;transform-style:preserve-3d;transition:transform .75s var(--ease-spring);cursor:pointer;-webkit-tap-highlight-color:transparent}
+/* Flashcards – samma som Biologiatlas */
+.fcsec{padding-top:8px}
+.fcbar{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin:4px 0}
+.fcbar .seg{flex-wrap:wrap;border-radius:18px}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.fc-restart{position:relative;display:inline-block}
+.fc-menu{position:absolute;z-index:30;top:calc(100% + 8px);left:0;width:min(330px,calc(100vw - 32px));background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh-3);padding:6px;display:grid;gap:2px;transform-origin:top left;animation:fxMenu .24s var(--ease-out)}
+.fc-menu button{font:inherit;text-align:left;background:none;border:0;border-radius:10px;padding:10px 12px;color:var(--ink);cursor:pointer;display:grid;gap:2px;transition:background-color .15s}
+.fc-menu button:hover,.fc-menu button:focus-visible{background:var(--bg);outline:none}
+.fc-menu b{font-family:var(--f-display);font-size:1.02rem}
+.fc-menu span{font-size:.9rem;color:var(--muted);line-height:1.4}
+.fc-menu .danger b{color:var(--bad)}
+@media (max-width:640px){.fc-menu{position:fixed;left:16px;right:16px;top:auto;bottom:calc(16px + env(safe-area-inset-bottom,0px));width:auto;transform-origin:bottom center;padding:8px}.fc-menu button{padding:14px}}
+.card3d{perspective:1400px;margin:14px 0 8px;border-radius:18px}
+.flash{position:relative;display:grid;min-height:250px;transform-style:preserve-3d;transition:transform .75s var(--ease-spring);cursor:pointer;-webkit-tap-highlight-color:transparent}
 .flash.flip{transform:rotateY(180deg)}
 .flash:focus-visible{outline:none}
-.flash:focus-visible .face{box-shadow:0 0 0 3px var(--c,var(--brand)),var(--sh-3)}
-.face{grid-area:1/1;position:relative;-webkit-backface-visibility:hidden;backface-visibility:hidden;border-radius:18px;padding:54px 28px 36px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;border:1px solid var(--line);background:var(--paper);box-shadow:var(--sh-2)}
-.face.back{transform:rotateY(180deg);background:color-mix(in srgb,var(--c,var(--brand)) 12%,var(--paper))}
-.face .q{font-family:var(--f-display);font-size:clamp(1.25rem,2.6vw,1.6rem);font-weight:700;line-height:1.3;max-width:34ch}
-.face .a{font-size:1.1rem;line-height:1.6;max-width:52ch;margin-top:8px}
-.face>.mono{position:absolute;top:16px;left:20px}
-.face .srcm{position:absolute;bottom:12px;right:16px;font-family:var(--f-mono);font-size:.72rem;color:var(--muted)}
-#star .st{font-size:1.2rem;color:var(--muted)}
-#star.on .st{color:var(--study)}
-.fc-hint{font-size:.88rem;color:var(--muted)}
-.kbd{font:500 .72rem var(--f-mono);border:1px solid currentColor;border-radius:5px;padding:0 5px;opacity:.75}
-.fc-done{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:14px 16px;border-radius:14px;background:var(--good-soft);border:1px solid color-mix(in srgb,var(--good) 35%,transparent);animation:fxPop .55s var(--ease-spring)}
+.flash:focus-visible .face{box-shadow:0 0 0 3px var(--note),var(--sh-3)}
+.face{position:relative;grid-area:1/1;-webkit-backface-visibility:hidden;backface-visibility:hidden;border-radius:18px;padding:54px 28px 32px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;border:1px solid var(--line);background:var(--paper);box-shadow:var(--sh-2);transition:box-shadow .3s var(--ease-out);hyphens:auto;-webkit-hyphens:auto;overflow-wrap:break-word}
+.flash:hover .face{box-shadow:var(--sh-3)}
+.face.back{transform:rotateY(180deg);background:var(--note-soft)}
+.face .q{font-family:var(--f-display);font-size:clamp(1.25rem,2.6vw,1.6rem);font-weight:700;line-height:1.3;max-width:34ch;letter-spacing:-.005em}
+.face .a{font-size:1.16rem;line-height:1.6;max-width:52ch}
+.face>.mono{position:absolute;top:16px;left:20px;right:20px;text-align:left}
+.fcprog{height:6px;border-radius:99px;background:var(--line);overflow:hidden;margin:2px 0 4px}
+.fcprog i{display:block;height:100%;width:0;border-radius:inherit;background:linear-gradient(90deg,var(--note),var(--good));transition:width .6s var(--ease-out)}
+#fcKnow{background:var(--good-btn);color:var(--btn-ink)}
+#fcAgain{background:var(--bad-btn);color:var(--btn-ink)}
+#fcStar[aria-pressed="true"]{border-color:var(--study);color:var(--study)}
+.fc-hint{margin-top:2px}
+.fc-done{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:12px 0;padding:14px 16px;border-radius:14px;background:var(--good-soft);border:1px solid color-mix(in srgb,var(--good) 35%,transparent);animation:fxPop .55s var(--ease-spring)}
+.fc-done p{margin:0 auto 0 0;font-weight:700}
 @keyframes fxPop{from{opacity:0;transform:translateY(10px) scale(.96)}}
+.fx-confetti{position:fixed;inset:0;pointer-events:none;z-index:60;overflow:hidden}
+.fx-confetti i{position:absolute;width:8px;height:12px;border-radius:2px}
+.fc-meta{display:flex;justify-content:space-between;color:var(--muted);font-size:.9rem;flex-wrap:wrap;gap:6px}
+.kbd{font:500 .72rem var(--f-mono);border:1px solid currentColor;border-radius:5px;padding:0 5px;opacity:.75}
 
 /* Quiz */
 .qq{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px 20px;box-shadow:var(--sh-1)}

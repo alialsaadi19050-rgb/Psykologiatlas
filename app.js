@@ -11,6 +11,11 @@
   let S = {};
   try { S = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { S = {}; }
   S.cards = S.cards || {}; S.wrong = S.wrong || {}; S.essay = S.essay || {}; S.crit = S.crit || {};
+  if (!S.known) { // flytta över från den gamla kortleken med lådor
+    S.known = {}; S.star = S.star || {};
+    Object.entries(S.cards).forEach(([k, c]) => { if (c.b >= 1) S.known[k] = true; if (c.s) S.star[k] = true; });
+  }
+  S.star = S.star || {};
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
 
   /* ---------- Hjälpfunktioner ---------- */
@@ -21,8 +26,6 @@
   const emLast = t => esc(t).replace(/(\S+)$/, "<em>$1</em>");
   // "Bok s. 171–172 · PPT ..." → "s.171–172", annars "PPT"
   const pages = src => { const m = /s\. ?([\d–,\s]+\d)/.exec(src); return m ? "s." + m[1].split(",")[0].trim() : "PPT"; };
-  const DAY = 864e5;
-  const IV = [0, 1 * DAY, 3 * DAY, 7 * DAY, 16 * DAY, 35 * DAY]; // repetition med intervall: låda 0–5
   let keyHandler = null, spy = null;
   document.addEventListener("keydown", e => {
     if (!keyHandler) return;
@@ -41,7 +44,7 @@
   });
   const ALL_TERMS = READY.flatMap(c => c.terms || []);
   const chap = id => CH.find(c => c.id === id);
-  const known = t => { const c = S.cards[t.id]; return c && c.b >= 1; };
+  const known = t => !!S.known[t.id];
   const pct = terms => terms.length ? Math.round(100 * terms.filter(known).length / terms.length) : 0;
 
   /* ---------- Tema ---------- */
@@ -56,7 +59,7 @@
   applyTheme();
   $("#reset").addEventListener("click", () => {
     if (!confirm("Vill du nollställa alla flashcards, quizfel och dina provsvar?")) return;
-    S.cards = {}; S.wrong = {}; S.essay = {}; S.crit = {}; save(); render();
+    S.cards = {}; S.known = {}; S.star = {}; S.wrong = {}; S.essay = {}; S.crit = {}; save(); render();
   });
 
   /* ---------- Flikar ---------- */
@@ -102,7 +105,7 @@
         <a class="card c-alla" style="--i:${READY.length + 1}" href="#/begrepp"><span class="mono">Flashcards · hela atlasen</span><b class="t">Alla begrepp</b><p>Alla ${ALL_TERMS.length} begrepp som flashcards och sökbar ordlista. Välj kapitel eller kör allt.</p>
           <span class="prog"><span class="bar"><i style="width:${pct(ALL_TERMS)}%"></i></span>${pct(ALL_TERMS)} %</span><span class="go">Öppna →</span></a>
       </div>
-      <p class="tip"><b>Tips:</b> Kort du kan kommer tillbaka efter 1, 3, 7, 16 och 35 dagar. Kör <b>Att repetera</b> varje dag så räcker några minuter. Allt sparas i den här webbläsaren.</p></div>`;
+      <p class="tip"><b>Tips:</b> Det du markerar som "Jag kan den" i flashcards sparas för varje kapitel, även när du byter flik. Kör "Kör tills jag kan alla" inför provet och markera svåra kort med ★.</p></div>`;
   }
 
   /* ---------- Kapitel ---------- */
@@ -123,7 +126,7 @@
             <div><b>2. Klicka i figurerna</b>Tryck på delarna i figurerna och öppna kontrollfrågorna.</div>
             <div><b>3. Testa dig</b>Kör flashcards tills allt sitter, sedan quiz och provfrågor.</div></div>
           ${A.tricks[c.id] ? `<div class="trick"><span class="mono">Minnesknep för hela kapitlet</span>${A.tricks[c.id]}</div>` : ""}`
-          : `<p class="lead">${view === "kort" ? "Flashcards med repetition." : view === "quiz" ? "Quiz med förklaringar och sidhänvisningar." : "Provfrågor med modellsvar och checklista."}</p>`}
+          : `<p class="lead">${view === "kort" ? "Vänd korten, markera det du kan och kör tills du kan alla." : view === "quiz" ? "Quiz med förklaringar och sidhänvisningar." : "Provfrågor med modellsvar och checklista."}</p>`}
         </header>
         <div id="view"></div>
       </div></div>`;
@@ -197,90 +200,176 @@
       ${s.crit ? `<details class="crit"><summary>Värdera studien (kritiskt tänkande)</summary><div class="note">${s.crit}</div></details>` : ""}</article>`;
   }
 
-  /* ---------- Flashcards med repetition ---------- */
-  function flash(el, terms, scope) {
-    let queue = [], cur = null, back = false, failed = new Set(), done = 0, again = 0, total = 0;
-    S.dir = S.dir || "td";
-    const card = id => S.cards[id] || (S.cards[id] = { b: 0, d: 0 });
-    const due = t => { const c = S.cards[t.id]; return !c || c.b === 0 || c.d <= Date.now(); };
-    const byId = id => terms.find(t => t.id === id);
-    const pools = { due: () => terms.filter(due), all: () => terms, star: () => terms.filter(t => S.cards[t.id] && S.cards[t.id].s) };
-
-    function menu() {
-      keyHandler = null;
-      const nd = pools.due().length, ns = pools.star().length, p = pct(terms);
-      el.innerHTML = `<div class="panel">
-        <h2>Flashcards</h2>
-        <div class="stat"><div><b>${p} %</b>kan du</div><div><b>${nd}</b>att repetera</div><div><b>${ns}</b>stjärnmärkta</div><div><b>${terms.length}</b>kort</div></div>
-        <div class="bar"><i style="width:${p}%"></i></div>
-        <p class="muted">Du kör tills du kan alla kort i omgången. <b>Igen</b> gör att kortet kommer tillbaka strax, och <b>Kan</b> gör att det kommer tillbaka om några dagar.</p>
-        <div class="row"><span class="muted">Visa först:</span>
-          <span class="seg"><button data-dir="td" class="${S.dir === "td" ? "on" : ""}">Begrepp</button><button data-dir="dt" class="${S.dir === "dt" ? "on" : ""}">Förklaring</button></span></div>
-        <div class="row">
-          <button class="btn" data-go="due" ${nd ? "" : "disabled"}>Att repetera (${nd})</button>
-          <button class="btn ghost" data-go="all">Alla kort (${terms.length})</button>
-          <button class="btn ghost" data-go="star" ${ns ? "" : "disabled"}>★ Stjärnmärkta (${ns})</button>
-        </div>
-        ${nd ? "" : `<p class="muted">Inget att repetera just nu. Bra jobbat! Kör alla kort om du vill öva ändå.</p>`}
-      </div>`;
-      $$("[data-dir]", el).forEach(b => b.onclick = () => { S.dir = b.dataset.dir; save(); menu(); });
-      $$("[data-go]", el).forEach(b => b.onclick = () => start(b.dataset.go));
-    }
-    function start(m) { queue = shuffle(pools[m]().map(t => t.id)); total = queue.length; failed = new Set(); done = 0; again = 0; next(); }
-    function next() { back = false; cur = queue.shift(); cur ? draw() : summary(); }
-    function draw() {
-      const t = byId(cur), c = S.cards[cur] || {};
-      const chip = scope === "all" ? esc(t.ch.short) : "Begrepp";
-      const front = S.dir === "td" ? `<span class="q">${esc(t.t)}</span>` : `<span class="a">${t.d}</span>`;
-      el.innerHTML = `<div class="fc-meta"><span>${done} av ${total} klara · ${queue.length + 1} kvar</span><span>Igen: ${again}</span></div>
-        <div class="bar" style="margin:6px 0"><i style="width:${total ? 100 * done / total : 0}%"></i></div>
-        <div class="card3d ${scope === "all" ? "c-" + t.ch.id : ""}"><div class="flash ${back ? "flip" : ""}" id="fcc" role="button" tabindex="0" aria-label="Vänd kortet">
-          <div class="face"><span class="mono">${chip}</span>${front}</div>
-          <div class="face back"><span class="mono">${chip}</span><span class="q">${esc(t.t)}</span><span class="a">${t.d}</span><span class="srcm">${esc(t.src)}</span></div>
-        </div></div>
-        <button class="btn ghost ${c.s ? "on" : ""}" id="star" aria-label="Stjärnmärk till senare" title="Stjärnmärk till senare (S)"><span class="st">★</span> <small>${c.s ? "Stjärnmärkt" : "Spara till senare"}</small></button>
-        <div class="row">
-          <button class="btn bad" id="no" ${back ? "" : "hidden"}>Igen <span class="kbd">1</span></button>
-          <button class="btn good" id="yes" ${back ? "" : "hidden"}>Kan <span class="kbd">2</span></button>
-          <button class="btn" id="flip" ${back ? "hidden" : ""}>Vänd <span class="kbd">mellanslag</span></button>
-          <button class="btn ghost" id="stop" style="margin-left:auto">Avsluta</button></div>
-        <p class="fc-hint">Tryck på kortet för att vända det.</p>`;
-      $("#fcc").onclick = flip;
-      $("#fcc").onkeydown = e => { if (e.key === "Enter") flip(); };
-      $("#star").onclick = toggleStar;
-      $("#flip").onclick = flip;
-      $("#yes").onclick = () => answer(true); $("#no").onclick = () => answer(false);
-      $("#stop").onclick = menu;
-      keyHandler = e => {
-        if (e.key === " ") { e.preventDefault(); flip(); }
-        else if (back && e.key === "1") answer(false);
-        else if (back && e.key === "2") answer(true);
-        else if (e.key.toLowerCase() === "s") toggleStar();
+  /* ---------- Animationer för flashcards (samma som i Biologiatlas) ---------- */
+  const FX = (() => {
+    let reduce = false; try { reduce = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
+    const canAnim = !reduce && !!Element.prototype.animate;
+    const EI = "cubic-bezier(.55,0,1,.45)", SPR = "cubic-bezier(.34,1.4,.55,1)";
+    const css = v => { try { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); } catch (e) { return ""; } };
+    const OUT = { next: "translateX(-70px) rotate(-5deg)", prev: "translateX(70px) rotate(5deg)", know: "translate(90px,-14px) rotate(8deg)", again: "translate(-90px,10px) rotate(-8deg)", restart: "translateY(26px) scale(.86)", shuffle: "scale(.9) rotate(-3deg)", mode: "translateY(10px) scale(.96)" };
+    const IN = { next: "translateX(70px) rotate(4deg)", prev: "translateX(-70px) rotate(-4deg)", know: "translateX(70px) rotate(4deg)", again: "translateX(70px) rotate(4deg)", restart: "translateY(-30px) scale(.9)", shuffle: "scale(.9) rotate(3deg)", mode: "translateY(10px) scale(.96)" };
+    let busy = null, wasDone = false, t0 = 0;
+    const resetFlip = f => { f.style.transition = "none"; f.classList.remove("flip"); void f.offsetWidth; f.style.transition = ""; };
+    function swap(flash, dir, update) {
+      const box = flash.parentElement;
+      if (!canAnim) { update(); return; }
+      if (busy) { busy.cancel(); busy = null; }
+      const glow = dir === "know" ? css("--good") : dir === "again" ? css("--bad-btn") : "";
+      const k0 = { transform: "none", opacity: 1 }, k1 = { transform: OUT[dir] || OUT.next, opacity: 0 };
+      if (glow) { k0.boxShadow = "0 0 0 0 transparent"; k1.boxShadow = "0 0 0 6px " + glow; }
+      const a = box.animate([k0, k1], { duration: dir === "restart" ? 240 : 190, easing: EI });
+      busy = a; let done = false;
+      const fin = () => {
+        if (done) return; done = true; busy = null; resetFlip(flash); update();
+        box.animate([{ transform: IN[dir] || IN.next, opacity: 0 }, { transform: "none", opacity: 1 }], { duration: dir === "restart" ? 620 : 460, easing: SPR });
       };
+      a.onfinish = fin; a.oncancel = fin;
+      setTimeout(fin, (dir === "restart" ? 240 : 190) + 120); // om animationer är pausade (dold flik) byts kortet ändå
     }
-    function flip() {
-      back = !back;
-      $("#fcc").classList.toggle("flip", back);
-      $("#flip").hidden = back; $("#yes").hidden = !back; $("#no").hidden = !back;
+    function confetti(el) {
+      if (!canAnim || !el) return;
+      const r = el.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      const layer = document.createElement("div"); layer.className = "fx-confetti"; document.body.appendChild(layer);
+      const cols = ["#D9A42B", "#3C6BD0", "#2E8A57", "#C4473D", "#7B4FC4"];
+      for (let i = 0; i < 36; i++) {
+        const p = document.createElement("i"); p.style.left = cx + "px"; p.style.top = cy + "px"; p.style.background = cols[i % cols.length];
+        if (i % 3 === 0) { p.style.borderRadius = "50%"; p.style.width = p.style.height = "9px"; }
+        layer.appendChild(p);
+        const ang = Math.random() * Math.PI * 2, sp = 120 + Math.random() * 220, dx = Math.cos(ang) * sp, dy = Math.sin(ang) * sp - 140, rot = Math.random() * 720 - 360;
+        p.animate([{ transform: "translate(-50%,-50%) rotate(0)", opacity: 1 },
+          { transform: `translate(calc(-50% + ${dx * .7}px),calc(-50% + ${dy * .7}px)) rotate(${rot * .6}deg)`, opacity: 1, offset: .45 },
+          { transform: `translate(calc(-50% + ${dx}px),calc(-50% + ${dy + 260}px)) rotate(${rot}deg)`, opacity: 0 }],
+          { duration: 1300 + Math.random() * 700, easing: "cubic-bezier(.2,.7,.4,1)", fill: "forwards" });
+      }
+      setTimeout(() => layer.remove(), 2300);
     }
+    function menu(btn, box, choose) {
+      const close = focus => { box.hidden = true; btn.setAttribute("aria-expanded", "false"); if (focus) btn.focus(); };
+      const open = () => { box.hidden = false; btn.setAttribute("aria-expanded", "true"); const f = box.querySelector("button"); if (f) f.focus(); };
+      btn.addEventListener("click", e => { e.stopPropagation(); box.hidden ? open() : close(); });
+      box.addEventListener("click", e => { const b = e.target.closest("button[data-r]"); if (!b) return; close(false); choose(b.dataset.r); });
+      box.addEventListener("keydown", e => {
+        const bs = [...box.querySelectorAll("button")], i = bs.indexOf(document.activeElement);
+        if (e.key === "Escape") { e.preventDefault(); close(true); }
+        else if (e.key === "ArrowDown") { e.preventDefault(); bs[(i + 1) % bs.length].focus(); }
+        else if (e.key === "ArrowUp") { e.preventDefault(); bs[(i - 1 + bs.length) % bs.length].focus(); }
+      });
+    }
+    document.addEventListener("click", e => $$(".fc-menu:not([hidden])").forEach(m => {
+      if (!m.parentElement.contains(e.target)) { m.hidden = true; m.previousElementSibling.setAttribute("aria-expanded", "false"); }
+    }));
+    const prog = v => { const i = $("#fcProg i"); if (i) i.style.width = Math.max(0, Math.min(1, v)) * 100 + "%"; };
+    function finish(on, text) {
+      const row = $("#fcDone"); if (!row) return;
+      if (text) row.querySelector("p").textContent = text;
+      row.hidden = !on;
+      if (on && !wasDone && Date.now() - t0 > 1200) confetti($("#flash"));
+      wasDone = on;
+    }
+    const start = () => { wasDone = false; t0 = Date.now(); };
+    return { swap, menu, prog, finish, start };
+  })();
+
+  /* ---------- Flashcards (samma kortlek och knappar som Biologiatlas) ---------- */
+  function flash(el, terms, scope) {
+    let order = terms.map((_, i) => i), pos = 0, mode = "all", round = 1;
+    const isKnown = i => !!S.known[terms[i].id], isStar = i => !!S.star[terms[i].id];
+    const nKnown = () => terms.filter(t => S.known[t.id]).length, nStar = () => terms.filter(t => S.star[t.id]).length;
+    el.innerHTML = `<section class="sec fcsec">
+      <div class="head"><h2>Flashcards</h2><span class="mono pg">klicka på kortet för att vända det</span></div>
+      <div class="fcbar"><div class="seg" id="deckMode"><button type="button" data-v="all" aria-pressed="true">Alla kort</button><button type="button" data-v="left" aria-pressed="false">Bara de jag inte kan</button><button type="button" data-v="until" aria-pressed="false">Kör tills jag kan alla</button><button type="button" data-v="star" aria-pressed="false">★ Markerade</button></div></div>
+      <div class="row"><button class="btn ghost" id="fcShuffle" type="button">Blanda</button><div class="fc-restart"><button class="btn ghost" id="fcRestart" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="fcRestartMenu">↺ Börja om</button><div class="fc-menu" id="fcRestartMenu" role="menu" hidden><button type="button" role="menuitem" data-r="soft"><b>Börja om från första kortet</b><span>Samma kortlek i ursprunglig ordning. Det du kan och dina ★-markerade kort sparas.</span></button><button type="button" role="menuitem" data-r="hard" class="danger"><b>Nollställ allt</b><span>Rensar vad du kan och filtren (★-markerade kort sparas) och visar alla kort från början.</span></button></div></div><span class="mono" id="fcStat"></span></div>
+      <div class="card3d"><div class="flash" id="flash" tabindex="0" role="button" aria-label="Vänd kortet">
+        <div class="face front"><span class="mono" id="fcTag"></span><div class="q" id="fcQ"></div></div>
+        <div class="face back"><span class="mono" id="fcSrc">Svar</span><div class="a" id="fcA"></div></div>
+      </div></div>
+      <div class="fcprog" id="fcProg" aria-hidden="true"><i></i></div>
+      <div class="row">
+        <button class="btn ghost" id="fcPrev" type="button">← Förra</button>
+        <button class="btn" id="fcKnow" type="button">Jag kan den ✓</button>
+        <button class="btn" id="fcAgain" type="button">Öva mer</button>
+        <button class="btn ghost" id="fcStar" type="button" aria-pressed="false" title="Markera kortet för att plugga det senare (M)">☆ Markera</button>
+        <button class="btn ghost" id="fcNext" type="button">Nästa →</button>
+      </div>
+      <div class="fc-done" id="fcDone" hidden><p>Varvet klart!</p><button class="btn" id="fcDoneRestart" type="button">↺ Kör igen</button><button class="btn ghost" id="fcDoneLeft" type="button">Kör tills jag kan alla</button></div>
+      <p class="mono fc-hint">Tangentbord: mellanslag vänder · ← → bläddrar · M markerar · R börjar om</p>
+    </section>`;
+    const fl = $("#flash", el);
+    FX.start();
+    const deck = () => order.filter(i => mode === "all" || (mode === "star" ? isStar(i) : !isKnown(i)));
+    const setSeg = v => $$("#deckMode button", el).forEach(o => o.setAttribute("aria-pressed", o.dataset.v === v));
+    const mix = () => { for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; } };
+    const setCard = (tag, q, a, src) => { $("#fcTag").textContent = tag; $("#fcQ").textContent = q; $("#fcA").textContent = a; $("#fcSrc").textContent = src || "Svar"; };
+    function starUI(i) {
+      const b = $("#fcStar"); b.disabled = i < 0;
+      const on = i >= 0 && isStar(i);
+      b.textContent = on ? "★ Markerad" : "☆ Markera"; b.setAttribute("aria-pressed", String(on));
+    }
+    function render() {
+      const d = deck();
+      $("#fcStat").textContent = `Kan: ${nKnown()} av ${terms.length} · ★ ${nStar()}`;
+      fl.classList.remove("flip"); starUI(-1);
+      $("#fcDoneLeft").hidden = mode !== "all" || nKnown() === terms.length;
+      if (!d.length && mode === "star") { setCard("", "Inga markerade kort än.", "Tryck på ☆ Markera (eller M) på ett kort du vill plugga senare."); FX.prog(0); FX.finish(false); return; }
+      if (!d.length) { setCard("", "Du kan alla kort här!", "Tryck på Börja om för att köra igen, eller gör quizet."); FX.prog(1); FX.finish(true, "Du kan alla kort här!"); return; }
+      if (pos < 0) pos = d.length - 1;
+      if (pos >= d.length && mode === "until") { round++; pos = 0; mix(); return render(); }
+      if (pos >= d.length) {
+        pos = d.length;
+        setCard("Klart", "Varvet är klart!", `Du har gått igenom alla ${d.length} kort. Kan: ${nKnown()} av ${terms.length}.`);
+        FX.prog(1); FX.finish(true, `Varvet klart! Kan: ${nKnown()} av ${terms.length}`); return;
+      }
+      FX.finish(false);
+      const i = d[pos], t = terms[i];
+      let tag = `${scope === "all" ? t.ch.short : "Begrepp"} · ${pos + 1}/${d.length}${isKnown(i) ? " · ✓" : ""}`;
+      if (mode === "until") tag += ` · Varv ${round} · ${d.length} kvar`;
+      setCard(tag, t.t, strip(t.d), "Svar · " + t.src);
+      FX.prog((pos + 1) / d.length);
+      starUI(i);
+    }
+    const atEnd = () => pos >= deck().length;
     function toggleStar() {
-      const c = card(cur); c.s = !c.s; save();
-      $("#star").classList.toggle("on", c.s); $("#star small").textContent = c.s ? "Stjärnmärkt" : "Spara till senare";
+      const d = deck(); if (!d.length || pos < 0 || pos >= d.length) return;
+      const i = d[pos], k = terms[i].id;
+      if (S.star[k]) delete S.star[k]; else S.star[k] = true;
+      save();
+      if (mode === "star" && !S.star[k]) FX.swap(fl, "next", render);
+      else { starUI(i); $("#fcStat").textContent = $("#fcStat").textContent.replace(/★ \d+/, "★ " + nStar()); }
     }
-    function answer(ok) {
-      const c = card(cur);
-      if (ok) { c.b = failed.has(cur) ? Math.max(c.b, 1) : Math.min(c.b + 1, 5); c.d = Date.now() + IV[c.b]; done++; }
-      else { c.b = 0; c.d = 0; failed.add(cur); again++; queue.splice(Math.min(3, queue.length), 0, cur); }
-      save(); next();
+    function restart(hard) {
+      FX.swap(fl, "restart", () => {
+        order = terms.map((_, i) => i); pos = 0; round = 1;
+        if (hard) { terms.forEach(t => delete S.known[t.id]); save(); mode = "all"; setSeg("all"); }
+        render();
+      });
     }
-    function summary() {
-      keyHandler = null;
-      el.innerHTML = `<div class="fc-done"><p>Klart! Du kan alla ${total} kort i omgången. ${again ? `Du behövde ${again} extra försök.` : "Allt rätt på första försöket!"}</p>
-        <button class="btn" id="back">Tillbaka</button></div>
-        <div class="row"><span class="bar"><i style="width:${pct(terms)}%"></i></span><span class="muted">${pct(terms)} % av begreppen kan du nu</span></div>`;
-      $("#back").onclick = menu;
-    }
-    menu();
+    const next = () => { if (atEnd()) return restart(false); FX.swap(fl, "next", () => { pos++; render(); }); };
+    const prev = () => FX.swap(fl, "prev", () => { pos--; render(); });
+    const flip = () => { if (!atEnd() && deck().length) fl.classList.toggle("flip"); };
+    fl.addEventListener("click", flip);
+    keyHandler = e => {
+      if (e.target.closest && e.target.closest(".fc-menu")) return;
+      if (e.key === " " || (e.key === "Enter" && e.target === fl)) { e.preventDefault(); flip(); }
+      else if (e.key === "ArrowRight") { e.preventDefault(); next(); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); prev(); }
+      else if (e.key === "m" || e.key === "M") { e.preventDefault(); toggleStar(); }
+      else if (e.key === "r" || e.key === "R") { e.preventDefault(); restart(false); }
+    };
+    $("#fcNext").onclick = next; $("#fcPrev").onclick = prev; $("#fcStar").onclick = toggleStar;
+    $("#fcKnow").onclick = () => {
+      if (atEnd() || !deck().length) return;
+      FX.swap(fl, "know", () => { const d = deck(); S.known[terms[d[pos]].id] = true; save(); if (mode === "all" || mode === "star") pos++; render(); });
+    };
+    $("#fcAgain").onclick = () => {
+      if (atEnd() || !deck().length) return;
+      FX.swap(fl, "again", () => { const d = deck(); delete S.known[terms[d[pos]].id]; save(); pos++; render(); });
+    };
+    $("#fcShuffle").onclick = () => FX.swap(fl, "shuffle", () => { mix(); pos = 0; render(); });
+    $$("#deckMode button", el).forEach(b => b.onclick = () => FX.swap(fl, "mode", () => { setSeg(b.dataset.v); mode = b.dataset.v; round = 1; if (mode === "until") mix(); pos = 0; render(); }));
+    FX.menu($("#fcRestart"), $("#fcRestartMenu"), r => restart(r === "hard"));
+    $("#fcDoneRestart").onclick = () => restart(false);
+    $("#fcDoneLeft").onclick = () => FX.swap(fl, "mode", () => { mode = "until"; round = 1; mix(); setSeg("until"); pos = 0; render(); });
+    render();
   }
 
   /* ---------- Quiz ---------- */
