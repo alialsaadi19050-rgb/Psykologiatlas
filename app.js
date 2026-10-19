@@ -65,7 +65,7 @@
   /* ---------- Flikar ---------- */
   function tabs(active) {
     const items = CH.filter(c => c.ready).map(c => [`#/k/${c.id}`, c.short, c.id, `c-${c.id}`])
-      .concat([["#/studier", "Studier", "studier", ""], ["#/begrepp", "Alla begrepp", "begrepp", ""]]);
+      .concat([["#/modeller", "Träna modeller", "modeller", ""], ["#/studier", "Studier", "studier", ""], ["#/begrepp", "Alla begrepp", "begrepp", ""]]);
     $("#tabs").innerHTML = items.map(([h, l, id, cls]) =>
       `<a href="${h}" class="${cls} ${id === active ? "on" : ""}" ${id === active ? 'aria-current="page"' : ""}>${cls ? "<i></i>" : ""}${esc(l)}</a>`).join("");
     const on = $("#tabs a.on"); if (on) on.scrollIntoView({ block: "nearest", inline: "center" });
@@ -78,10 +78,11 @@
     const parts = location.hash.replace(/^#\/?/, "").split("/").filter(Boolean);
     const [p0, p1, p2, p3] = parts;
     if (p0 === "k" && chap(p1) && chap(p1).ready) { tabs(p1); chapterPage(chap(p1), p2 || "las", p3); }
+    else if (p0 === "modeller") { tabs("modeller"); modelsPage(p1); }
     else if (p0 === "studier") { tabs("studier"); studiesPage(p1); }
     else if (p0 === "begrepp") { tabs("begrepp"); termsPage(p1 || "kort"); }
     else { tabs("start"); home(); }
-    if (!(p0 === "k" && p3)) window.scrollTo({ top: 0, behavior: "instant" });
+    if (!((p0 === "k" && p3) || (p0 === "modeller" && p1))) window.scrollTo({ top: 0, behavior: "instant" });
   }
   window.addEventListener("hashchange", render);
 
@@ -101,6 +102,7 @@
       <h1>Psykologi<em>atlas</em></h1>
       <p class="lead">Sex kapitel, alla studier och alla begrepp på ett ställe. Välj ett kapitel nedan eller i flikarna högst upp. Varje kapitel har sin egen meny, klickbara figurer, flashcards, quiz och provfrågor med modellsvar.</p>
       <div class="cards">${cards}
+        <a class="card c-alla" style="--i:${READY.length}" href="#/modeller"><span class="mono">Öva · ${(A.models || []).length} modeller</span><b class="t">Träna modellerna</b><p>Fyll i tomma modeller, sätt stegen i ordning och kör snabbquiz: Stern, Marcia, Bowlby, Tuckman, Hersey & Blanchard och fler.</p><span class="go">Öppna →</span></a>
         <a class="card c-alla" style="--i:${READY.length}" href="#/studier"><span class="mono">Alla kapitel · ${nStud} studier</span><b class="t">Studiernas röda tråd</b><p>Alla studier i den ordning de hänger ihop: teori, sedan studier som stödjer eller säger emot, och sist slutsatsen.</p><span class="go">Öppna →</span></a>
         <a class="card c-alla" style="--i:${READY.length + 1}" href="#/begrepp"><span class="mono">Flashcards · hela atlasen</span><b class="t">Alla begrepp</b><p>Alla ${ALL_TERMS.length} begrepp som flashcards och sökbar ordlista. Välj kapitel eller kör allt.</p>
           <span class="prog"><span class="bar"><i style="width:${pct(ALL_TERMS)}%"></i></span>${pct(ALL_TERMS)} %</span><span class="go">Öppna →</span></a>
@@ -110,7 +112,8 @@
 
   /* ---------- Kapitel ---------- */
   function chapterPage(c, view, target) {
-    const practice = [["kort", "Flashcards", c.terms.length], ["quiz", "Quiz", c.quiz.length], ["prov", "Provfrågor", c.essays.length]];
+    const practice = [["kort", "Flashcards", c.terms.length], ["quiz", "Quiz", c.quiz.length], ["prov", "Provfrågor", c.essays.length]]
+      .concat(modelsOf(c.id).length ? [["modeller", "Träna modeller", modelsOf(c.id).length]] : []);
     const rail = c.sections.map(s => `<a href="#/k/${c.id}/las/${s.id}" data-sec="${s.id}"><span>${pages(s.src)}</span>${esc((A.nav[c.id] || {})[s.id] || s.title)}</a>`).join("") +
       `<div class="sep"></div>` +
       practice.map(([v, l, n]) => `<a href="#/k/${c.id}/${v}" class="${view === v ? "on" : ""}"><span>▸ ${n}</span>${l}</a>`).join("");
@@ -126,7 +129,7 @@
             <div><b>2. Klicka i figurerna</b>Tryck på delarna i figurerna och öppna kontrollfrågorna.</div>
             <div><b>3. Testa dig</b>Kör flashcards tills allt sitter, sedan quiz och provfrågor.</div></div>
           ${A.tricks[c.id] ? `<div class="trick"><span class="mono">Minnesknep för hela kapitlet</span>${A.tricks[c.id]}</div>` : ""}`
-          : `<p class="lead">${view === "kort" ? "Vänd korten, markera det du kan och kör tills du kan alla." : view === "quiz" ? "Quiz med förklaringar och sidhänvisningar." : "Provfrågor med modellsvar och checklista."}</p>`}
+          : `<p class="lead">${view === "kort" ? "Vänd korten, markera det du kan och kör tills du kan alla." : view === "modeller" ? "Fyll i de tomma modellerna, sätt stegen i ordning och kör snabbquiz." : view === "quiz" ? "Quiz med förklaringar och sidhänvisningar." : "Provfrågor med modellsvar och checklista."}</p>`}
         </header>
         <div id="view"></div>
       </div></div>`;
@@ -134,6 +137,7 @@
     if (view === "kort") flash(el, c.terms, c.id);
     else if (view === "quiz") quiz(el, c.quiz);
     else if (view === "prov") essays(el, c.essays);
+    else if (view === "modeller" && modelsOf(c.id).length) modelsView(el, modelsOf(c.id), target, id => `#/k/${c.id}/modeller/${id}`);
     else {
       read(el, c);
       if (target) { const s = document.getElementById(target); if (s) { s.scrollIntoView(); s.classList.add("hl"); setTimeout(() => s.scrollIntoView(), 250); } }
@@ -172,7 +176,7 @@
   function figure(id) {
     const f = A.figs[id];
     return `<figure class="fig" data-fig="${id}" aria-label="${esc(f.label)}"><div class="svgwrap">${f.svg}</div>
-      <p class="hint">Klicka på delarna i figuren. I mobilen kan du svepa åt sidan.</p>
+      <p class="hint">Klicka på delarna i figuren. I mobilen kan du svepa åt sidan.${(A.models || []).some(m => m.id === id) ? ` <a class="train" href="#/k/${A.models.find(m => m.id === id).ch}/modeller/${id}">Träna på modellen →</a>` : ""}</p>
       <div class="fig-info" aria-live="polite">${f.start || ""}</div></figure>`;
   }
   function wireFigs(root) {
@@ -485,6 +489,155 @@
         </details></article>`).join("");
     $$("textarea", el).forEach(t => t.addEventListener("input", () => { S.essay[t.closest(".essay").id] = t.value; save(); }));
     $$("[data-c]", el).forEach(c => c.addEventListener("change", () => { S.crit[c.dataset.c] = c.checked; save(); }));
+  }
+
+  /* ---------- Träna modeller: fyll i, sätt i ordning, snabbquiz ---------- */
+  const MODELS = A.models || [];
+  const modelsOf = ch => MODELS.filter(m => m.ch === ch);
+  S.models = S.models || {};
+
+  function modelsPage(active) {
+    const groups = READY.filter(c => modelsOf(c.id).length);
+    app.innerHTML = `<div class="page c-alla"><span class="mono">Psykologi · alla kapitel · ${MODELS.length} modeller</span><h1>Träna <em>modellerna</em></h1>
+      <p class="lead">Fyll i de tomma modellerna, sätt stegen i rätt ordning och kör snabbquiz. Så lär du dig Sterns stadier, Marcias statusar, Tuckman och alla andra modeller utantill.</p>
+      <div id="mview"></div></div>`;
+    modelsView($("#mview"), MODELS, active, id => `#/modeller/${id}`, groups);
+  }
+
+  function modelsView(el, list, activeId, hrefFor, groups) {
+    const m = list.find(x => x.id === activeId) || list[0];
+    const chip = x => {
+      const best = S.models[x.id];
+      return `<a class="chip c-${x.ch} ${x.id === m.id ? "on" : ""}" href="${hrefFor(x.id)}"><i></i>${esc(x.title.replace(/ \(.*\)$/, ""))}${best === 100 ? " ✓" : ""}</a>`;
+    };
+    el.innerHTML = (groups
+      ? groups.map(c => `<div class="mx-group"><span class="mono">${esc(c.short)}</span><div class="chips">${modelsOf(c.id).map(chip).join("")}</div></div>`).join("")
+      : `<div class="chips">${list.map(chip).join("")}</div>`) +
+      `<div class="mx c-${m.ch}" id="mx"></div>`;
+    renderModel($("#mx", el), m);
+    if (activeId) [0, 350].forEach(t => setTimeout(() => { const x = $("#mx", el); if (x) x.scrollIntoView({ block: "start", behavior: t ? "instant" : "smooth" }); }, t));
+  }
+
+  function renderModel(box, m) {
+    const modes = [["fyll", "Fyll i modellen"], ["beskr", "Para ihop beskrivningar"]]
+      .concat(m.ordered ? [["ordning", "Sätt i ordning"]] : []).concat([["quiz", "Snabbquiz"]]);
+    let mode = modes.some(x => x[0] === S.mmode) ? S.mmode : "fyll";
+    const best = S.models[m.id];
+    box.innerHTML = `<div class="mx-head"><span class="mono">Modell · ${esc(m.src)}${best != null ? ` · bästa: ${best} %` : ""}</span><h2>${esc(m.title)}</h2>
+        <a class="mono" href="#/k/${m.ch}/las/${m.sec}">Se modellen i kapitlet →</a></div>
+      <div class="seg mx-modes">${modes.map(([v, l]) => `<button type="button" data-v="${v}" aria-pressed="${v === mode}">${l}</button>`).join("")}</div>
+      <div id="mxBody"></div>`;
+    $$(".mx-modes button", box).forEach(b => b.onclick = () => {
+      S.mmode = mode = b.dataset.v; save();
+      $$(".mx-modes button", box).forEach(o => o.setAttribute("aria-pressed", o === b));
+      run();
+    });
+    const body = $("#mxBody", box);
+    const record = pc => { S.models[m.id] = Math.max(S.models[m.id] || 0, pc); save(); };
+    const run = () => mode === "ordning" ? orderModel(body, m, record) : mode === "quiz" ? quizModel(body, m, record) : fillModel(body, m, mode === "beskr", record);
+    run();
+  }
+
+  // Fyll i: tryck på ett ord och sedan på en tom ruta (eller dra ordet dit)
+  function fillModel(body, m, byDesc, record) {
+    const n = m.steps.length;
+    const slotOrder = byDesc || !m.ordered ? shuffle([...Array(n).keys()]) : [...Array(n).keys()];
+    let placed = Array(n).fill(null), sel = null, checked = false, bank = shuffle([...Array(n).keys()]);
+    const draw = () => {
+      const free = bank.filter(k => !placed.includes(k));
+      body.innerHTML = `<p class="muted">${byDesc ? "Läs beskrivningen och placera rätt namn i varje ruta." : `Varje ruta visar en ledtråd (${esc(m.hintName.toLowerCase())}). Placera rätt namn i varje ruta.`} Tryck på ett namn och sedan på en ruta, eller dra namnet dit.</p>
+        <div class="slots ${m.ordered && !byDesc ? "ordered" : ""}">${slotOrder.map((s, k) => {
+          const p = placed[s], st = m.steps[s];
+          const cls = checked ? (p === s ? "ok" : "no") : p != null ? "filled" : "";
+          return `<div class="slot ${cls}" data-s="${s}">
+            ${m.ordered && !byDesc ? `<span class="num">${k + 1}</span>` : ""}
+            <span class="mono">${byDesc ? esc(m.hintName) + " · ?" : esc(st.hint)}</span>
+            ${byDesc ? `<p class="sd">${esc(st.desc)}</p>` : ""}
+            <button type="button" class="drop" data-s="${s}" aria-label="Ruta: ${esc(byDesc ? st.desc : st.hint)}">${p != null ? esc(m.steps[p].label) : sel != null ? "Placera här" : "Tom ruta"}</button>
+            ${checked && p !== s ? `<span class="fix">Rätt: <b>${esc(st.label)}</b></span>` : ""}
+          </div>`;
+        }).join("")}</div>
+        <div class="bank" aria-label="Ordbank">${free.map(k => `<button type="button" class="word ${sel === k ? "sel" : ""}" draggable="true" data-k="${k}">${esc(m.steps[k].label)}</button>`).join("") || (checked ? "" : `<span class="muted">Alla namn är placerade. Tryck Kontrollera.</span>`)}</div>
+        <div class="row">${checked
+          ? `<button class="btn" type="button" id="mxAgain">↺ Försök igen</button>`
+          : `<button class="btn" type="button" id="mxCheck" ${placed.includes(null) ? "disabled" : ""}>Kontrollera</button><button class="btn ghost" type="button" id="mxShow">Visa svar</button><button class="btn ghost" type="button" id="mxReset">Töm</button>`}
+          <span class="score" id="mxScore"></span></div>`;
+      $$(".word", body).forEach(w => {
+        w.onclick = () => { sel = sel === +w.dataset.k ? null : +w.dataset.k; draw(); };
+        w.ondragstart = e => { e.dataTransfer.setData("text/plain", w.dataset.k); sel = +w.dataset.k; };
+      });
+      $$(".drop", body).forEach(d => {
+        const s = +d.dataset.s;
+        const place = k => { if (checked) return; const old = placed.indexOf(k); if (old > -1) placed[old] = null; placed[s] = k; sel = null; draw(); };
+        d.onclick = () => { if (checked) return; if (sel != null) place(sel); else if (placed[s] != null) { placed[s] = null; draw(); } };
+        d.ondragover = e => { e.preventDefault(); d.classList.add("over"); };
+        d.ondragleave = () => d.classList.remove("over");
+        d.ondrop = e => { e.preventDefault(); place(+e.dataTransfer.getData("text/plain")); };
+      });
+      if ($("#mxCheck", body)) {
+        $("#mxCheck", body).onclick = () => {
+          checked = true; const right = placed.filter((p, s) => p === s).length, pc = Math.round(100 * right / n);
+          record(pc); draw();
+          $("#mxScore", body).textContent = `${right} av ${n} rätt${right === n ? " 🎉" : ""}`;
+        };
+        $("#mxShow", body).onclick = () => { placed = [...Array(n).keys()]; checked = true; draw(); $("#mxScore", body).textContent = "Facit visas"; };
+        $("#mxReset", body).onclick = () => { placed = Array(n).fill(null); sel = null; draw(); };
+      } else $("#mxAgain", body).onclick = () => fillModel(body, m, byDesc, record);
+    };
+    draw();
+  }
+
+  // Sätt i ordning med pilar
+  function orderModel(body, m, record) {
+    const n = m.steps.length;
+    let cur = shuffle([...Array(n).keys()]);
+    if (cur.every((v, i) => v === i)) cur.reverse();
+    let checked = false;
+    const draw = () => {
+      body.innerHTML = `<p class="muted">Flytta stegen med pilarna så att de kommer i rätt ordning, från början till slut.</p>
+        <ol class="order-list">${cur.map((s, k) => `<li class="${checked ? (s === k ? "right" : "wrong") : ""}"><b>${k + 1}.</b><span>${esc(m.steps[s].label)}${checked ? ` <small class="muted">(${esc(m.steps[s].hint)})</small>` : ""}</span>
+          ${checked ? "" : `<button class="mini" data-u="${k}" aria-label="Flytta upp" ${k ? "" : "disabled"}>↑</button><button class="mini" data-d="${k}" aria-label="Flytta ner" ${k < n - 1 ? "" : "disabled"}>↓</button>`}</li>`).join("")}</ol>
+        <div class="row">${checked ? `<button class="btn" type="button" id="mxAgain">↺ Försök igen</button>` : `<button class="btn" type="button" id="mxCheck">Kontrollera</button>`}<span class="score" id="mxScore"></span></div>
+        ${checked && !cur.every((v, i) => v === i) ? `<p class="muted">Rätt ordning: ${m.steps.map((s, i) => `${i + 1}. ${esc(s.label)}`).join(" · ")}</p>` : ""}`;
+      $$("[data-u]", body).forEach(b => b.onclick = () => { const k = +b.dataset.u; [cur[k - 1], cur[k]] = [cur[k], cur[k - 1]]; draw(); });
+      $$("[data-d]", body).forEach(b => b.onclick = () => { const k = +b.dataset.d; [cur[k + 1], cur[k]] = [cur[k], cur[k + 1]]; draw(); });
+      if ($("#mxCheck", body)) $("#mxCheck", body).onclick = () => {
+        checked = true; const right = cur.filter((v, i) => v === i).length; record(Math.round(100 * right / n)); draw();
+        $("#mxScore", body).textContent = `${right} av ${n} på rätt plats${right === n ? " 🎉" : ""}`;
+      };
+      else $("#mxAgain", body).onclick = () => orderModel(body, m, record);
+    };
+    draw();
+  }
+
+  // Snabbquiz: beskrivning eller ledtråd → vilket steg?
+  function quizModel(body, m, record) {
+    const n = m.steps.length;
+    const qs = shuffle([...Array(n).keys()].flatMap(s => [{ s, by: "desc" }, { s, by: "hint" }])).slice(0, Math.min(8, 2 * n));
+    let i = 0, score = 0;
+    const ask = () => {
+      if (i >= qs.length) {
+        const pc = Math.round(100 * score / qs.length); record(pc);
+        body.innerHTML = `<div class="fc-done"><p>${score} av ${qs.length} rätt${score === qs.length ? " 🎉" : ""}</p><button class="btn" type="button" id="mxAgain">↺ Kör igen</button></div>`;
+        $("#mxAgain", body).onclick = () => quizModel(body, m, record);
+        return;
+      }
+      const q = qs[i], st = m.steps[q.s];
+      const opts = shuffle([q.s, ...shuffle([...Array(n).keys()].filter(k => k !== q.s)).slice(0, 3)]);
+      body.innerHTML = `<div class="qq"><div class="fc-meta"><span class="mono">Fråga ${i + 1} av ${qs.length}</span><span class="score">${score} rätt</span></div>
+        <div class="bar" style="margin:8px 0 14px"><i style="width:${100 * i / qs.length}%"></i></div>
+        <p class="q">${q.by === "desc" ? `Vilket steg i modellen beskrivs?<br><span class="muted">"${esc(st.desc)}"</span>` : `${esc(m.hintName)}: <b>${esc(st.hint)}</b>. Vad heter steget?`}</p>
+        <div class="opts">${opts.map(k => `<button class="opt" data-k="${k}">${esc(m.steps[k].label)}</button>`).join("")}</div><div id="mxFb"></div></div>`;
+      $$(".opt", body).forEach(b => b.onclick = () => {
+        const ok = +b.dataset.k === q.s; if (ok) score++;
+        $$(".opt", body).forEach(x => { x.disabled = true; if (+x.dataset.k === q.s) x.classList.add("right"); });
+        if (!ok) b.classList.add("wrong");
+        $("#mxFb", body).innerHTML = `<div class="fb ${ok ? "ok" : "no"}"><b>${ok ? "Rätt!" : "Inte riktigt."}</b>${esc(st.label)} (${esc(st.hint)}): ${esc(st.desc)}</div>
+          <div class="row"><button class="btn" id="mxNext">${i + 1 < qs.length ? "Nästa →" : "Se resultat"}</button></div>`;
+        $("#mxNext", body).onclick = () => { i++; ask(); };
+      });
+    };
+    ask();
   }
 
   /* ---------- Studier: en röd tråd från teori till studie till slutsats ---------- */

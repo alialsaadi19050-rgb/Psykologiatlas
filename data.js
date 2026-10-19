@@ -1611,3 +1611,113 @@ window.ATLAS.thread = [
     ]
   }
 ];
+
+/* Modeller att träna på: varje steg har namn, en ledtråd (ålder, nivå eller position) och en beskrivning.
+   ordered = stegen har en bestämd ordning. fig/sec = var modellen finns i kapitlet. */
+window.ATLAS.models = [
+  { id: "stern", ch: "identitet", sec: "stern", title: "Daniel Sterns fem stadier", ordered: true, hintName: "Ålder", src: "Bok s. 173–174",
+    steps: [
+      { label: "Inget sammanhållet själv", hint: "0–2 mån", desc: "Känner igen mammas röst och föräldrarnas ansikten och uppskattar dagliga rutiner. Grunden för självuppfattningen." },
+      { label: "Kärnsjälvet", hint: "2–6 mån", desc: "Medveten ögonkontakt och det första sociala leendet. Byggs av intryck, enkla minnesbilder, egna känslor och rörelser." },
+      { label: "Det subjektiva självet", hint: "7–15 mån", desc: "Knyter an till den som tar hand om en och uppfattar samspelet, ett växelspel med föräldrarna." },
+      { label: "Det verbala självet", hint: "16 mån–3 år", desc: "Språket gör att barnet kan hantera sig själv. Symbollekar, säger sitt namn och känner igen spegelbilden." },
+      { label: "Det berättande självet", hint: "4 år –", desc: "Tal och minne gör att barnet kan berätta sammanhängande historier. Samtal formar identiteten." }
+    ] },
+  { id: "marcia", ch: "identitet", sec: "marcia", title: "Marcias fyra identitetsstatusar", ordered: false, hintName: "Utforskning / engagemang", src: "Bok s. 176–177",
+    steps: [
+      { label: "Förutfattad identitet", hint: "Utforskat: nej · Engagemang: ja", desc: "Säker men \"lånad\" identitet, övertagen från föräldrarna utan egen reflektion. Ingen stor kris." },
+      { label: "Identitetsförvirring", hint: "Utforskat: nej · Engagemang: nej", desc: "Diffus och obestämd (fluid identity). Ingen utforskning av roller och inga bestående engagemang." },
+      { label: "Moratorium", hint: "Utforskat: ja, mitt i kris · Engagemang: vagt", desc: "Söker aktivt och prövar alternativ. Kriser kan ge ångest och förtvivlan." },
+      { label: "Etablerad identitet", hint: "Utforskat: ja · Engagemang: ja", desc: "Klar och konsistent identitet som man själv har format. Kan se andras perspektiv." }
+    ] },
+  { id: "bowlby", ch: "anknytning", sec: "bowlby", title: "Bowlbys fyra stadier", ordered: true, hintName: "Ålder", src: "Bok s. 179",
+    steps: [
+      { label: "Signalerar behov", hint: "0–2 mån", desc: "Barnet signalerar behov och känslor och reagerar på kontakt, vilket ger närhet till vårdarna." },
+      { label: "Känner igen, trygghet växer", hint: "2–7 mån", desc: "Barnet känner igen vissa människor. Om de är pålitliga växer en trygghet fram." },
+      { label: "Protesterar, trygg bas", hint: "7 mån–2 år", desc: "Protesterar när trygghetspersonen försvinner, svårt att tröstas av andra, utforskar med den trygga vuxna som bas." },
+      { label: "Förstår andras känslor", hint: "2 år –", desc: "Börjar förstå andra människors känslor och behov, så samspelet kan utvecklas vidare." }
+    ] },
+  { id: "strange", ch: "anknytning", sec: "ainsworth", title: "The Strange Situation i sju steg", ordered: true, hintName: "Steg", src: "Bok s. 180",
+    steps: [
+      { label: "Barnet och mamman leker", hint: "Steg 1", desc: "Använder barnet mamman som trygg bas och utforskar rummet?" },
+      { label: "En främling kommer in", hint: "Steg 2", desc: "Leker barnet med främlingen?" },
+      { label: "Mamman lämnar rummet", hint: "Steg 3", desc: "Hur reagerar barnet när mamman går?" },
+      { label: "Mamman tillbaka, främlingen går", hint: "Steg 4", desc: "Låter sig barnet tröstas lätt av mamman?" },
+      { label: "Mamman går, barnet är ensamt", hint: "Steg 5", desc: "Här blir stressen störst." },
+      { label: "Främlingen kommer in", hint: "Steg 6", desc: "Låter sig barnet tröstas av främlingen?" },
+      { label: "Mamman tillbaka, främlingen går ut", hint: "Steg 7", desc: "Hur tar barnet emot mamman den andra gången?" }
+    ] },
+  { id: "stilar", ch: "anknytning", sec: "stilar", title: "Anknytningsstilarna A–D", ordered: false, hintName: "Typ och andel", src: "Bok s. 180–181",
+    steps: [
+      { label: "Undvikande", hint: "Typ A · 10 %", desc: "Stänger av när mamman går, visar ingen stress och bryr sig inte om henne när hon kommer tillbaka." },
+      { label: "Trygg", hint: "Typ B · 60–70 %", desc: "Leker med mamman som trygg bas, blir ledsen när hon går och tröstas lätt när hon kommer." },
+      { label: "Ambivalent", hint: "Typ C · 10 %", desc: "Ledsen när mamman går, men både vill och inte vill bli tröstad. Mamman är ingen trygg bas." },
+      { label: "Oorganiserad/osäker", hint: "Typ D · 5–10 %", desc: "Ingen konsekvent strategi: ibland lätt att trösta, ibland tvekar barnet att söka tröst." }
+    ] },
+  { id: "hazan", ch: "anknytning", sec: "hazan", title: "Hazan och Shaver: vuxna relationer", ordered: false, hintName: "Andel", src: "Bok s. 182",
+    steps: [
+      { label: "Trygg anknytning", hint: "56 %", desc: "Lätt att vara nära, litar på partnern, inte rädd att bli övergiven, lägst andel skilsmässor." },
+      { label: "Ambivalent anknytning", hint: "20 %", desc: "Rädd att bli avvisad, ser relationen som instabil, svartsjuk." },
+      { label: "Undvikande anknytning", hint: "24 %", desc: "Svårt att vara nära andra. Relationen saknar närhet och tillit." }
+    ] },
+  { id: "lek", ch: "anknytning", sec: "lek", title: "Lekens och relationernas utveckling", ordered: true, hintName: "Ålder", src: "Bok s. 182–185",
+    steps: [
+      { label: "Ler och sträcker sig mot andra barn", hint: "6–12 mån", desc: "Ler mot andra barn och sträcker sig mot dem för att röra vid dem." },
+      { label: "Lek vid sidan om varandra", hint: "1 år", desc: "Delar leksaker men mest konflikter. Leker bredvid men inte tillsammans." },
+      { label: "Övningslekar", hint: "1–2 år", desc: "Roligt att behärska leken, inte att förstå den. Tränar impulskontroll." },
+      { label: "Aktionslekar (vild lek)", hint: "2–6 år", desc: "Leker mer i grupp, till exempel springa och jaga varandra utan mål." },
+      { label: "Rollekar (symbollekar)", hint: "3–4 år", desc: "Leker doktor eller mamma-pappa-barn. Vänskap formas, ofta med samma kön." },
+      { label: "Regelstyrd lek", hint: "6–12 år", desc: "Formella regler (fotboll) eller informella (kurragömma). Grupphierarkier uppstår." },
+      { label: "Klickar", hint: "12–18 år", desc: "Umgås i grupper med samma intressen: 29 % av tiden med kompisar, 13 % med föräldrar." }
+    ] },
+  { id: "firo", ch: "grupper", sec: "firo", title: "FIRO-modellen (Schultz)", ordered: true, hintName: "Fas", src: "Bok s. 188",
+    steps: [
+      { label: "Tillhörandefasen", hint: "Fas 1", desc: "Ser sig inte som en grupp än, men börjar skapa ett sammanhang." },
+      { label: "Rollsökningsfasen", hint: "Fas 2", desc: "Bestämmer roller och status, mäter kompetens, konflikter. Vissa grupper fastnar här." },
+      { label: "Samhörighetsfasen", hint: "Fas 3", desc: "Rollerna är klara och gruppen bygger relationer. Samarbete och bättre resultat." }
+    ] },
+  { id: "tuckman", ch: "grupper", sec: "tuckman", title: "Tuckmans fem faser", ordered: true, hintName: "Fas", src: "Bok s. 188–189",
+    steps: [
+      { label: "Forming", hint: "Fas 1", desc: "Positiva och engagerade, men lite förvirrande eftersom samspelet inte är klart." },
+      { label: "Storming", hint: "Fas 2", desc: "Alla söker sin plats, vilket ger konflikter. Energin är som lägst." },
+      { label: "Norming", hint: "Fas 3", desc: "Medlemmarna känner varandra och börjar samspela. Normer skapas." },
+      { label: "Performing", hint: "Fas 4", desc: "Sammansvetsad grupp med fokus på samspel, mål och arbete." },
+      { label: "Adjourning", hint: "Fas 5", desc: "Gruppen upplöses när målen är nådda." }
+    ] },
+  { id: "sjufas", ch: "grupper", sec: "sjufas", title: "Sjufasmodellen (Lennéer Axelson och Thylefors)", ordered: true, hintName: "Fas", src: "Bok s. 189–190",
+    steps: [
+      { label: "Initialfas", hint: "Fas 1", desc: "Osäkra medlemmar, inga tydliga normer eller roller, alla visar sina bästa sidor." },
+      { label: "Smekmånadsfas", hint: "Fas 2", desc: "\"Den rätta\" gruppen. Avslappnat, mer kommunikation, man känner sig trygg." },
+      { label: "Integrationsfas", hint: "Fas 3", desc: "Visar även dåliga sidor men undviker konflikt genom att fokusera på uppgiften. Vi-känsla." },
+      { label: "Konfliktfas", hint: "Fas 4", desc: "Undvikna konflikter blir tydliga. Vissa vill vinna, andra vill tillbaka." },
+      { label: "Platåfas", hint: "Fas 5", desc: "Det står still, medlemmarna är likgiltiga och gruppen utvecklas inte." },
+      { label: "Mognadsfas", hint: "Fas 6", desc: "Självständiga medlemmar, genuin respekt, klara mål och roller." },
+      { label: "Separationsfas", hint: "Fas 7", desc: "Gruppen upphör, och känslor som ångest, ilska, glädje eller sorg kan dyka upp." }
+    ] },
+  { id: "ledarstilar", ch: "ledarskap", sec: "stilar", title: "Tre klassiska ledarstilar", ordered: false, hintName: "Stil", src: "Bok s. 191",
+    steps: [
+      { label: "Auktoritär ledare", hint: "Ger order", desc: "Lyssnar inte. Hög produktivitet när ledaren är där, men gruppen blir beroende och uppskattar inte ledaren." },
+      { label: "Demokratisk ledare", hint: "Samråder", desc: "Gruppen kan arbeta utan ledaren, oftast mer produktiv, och ledaren uppskattas." },
+      { label: "Låt-gå-ledare", hint: "Passiv", desc: "Ointresserad och leder inte. Låg produktivitet med och utan ledaren." }
+    ] },
+  { id: "hersey", ch: "ledarskap", sec: "situation", title: "Hersey och Blanchard: situationsanpassat ledarskap", ordered: true, hintName: "Mognadsnivå", src: "Bok s. 192–193",
+    steps: [
+      { label: "Instruerande ledarstil", hint: "Nivå 1 · kan inte", desc: "Auktoritär och beordrande, envägskommunikation, exakta instruktioner och noggrann uppföljning." },
+      { label: "Tränande ledarstil", hint: "Nivå 2 · kan lite, vill mycket", desc: "Mycket förklaring och motivering, tvåvägskommunikation." },
+      { label: "Deltagande ledarstil", hint: "Nivå 3 · kan, men vill inte alltid", desc: "Lockar med medbestämmande och samarbete, gruppen får känna tillit." },
+      { label: "Delegerande ledarstil", hint: "Nivå 4 · kan och vill", desc: "Ger gruppen ansvar för beslut och genomförande." }
+    ] },
+  { id: "tafvelin", ch: "ledarskap", sec: "tafvelin", title: "Transformerande ledarskap (Tafvelin)", ordered: false, hintName: "Beteende", src: "Bok s. 193",
+    steps: [
+      { label: "Vara en förebild", hint: "1", desc: "Leva som man lär, så att medarbetarna kan se upp till och lita på chefen." },
+      { label: "Positiv framtidsvision", hint: "2", desc: "Skapa mening och motivation." },
+      { label: "Stimulera nya idéer", hint: "3", desc: "Ge förutsättningar och handlingsutrymme." },
+      { label: "Visa omtanke", hint: "4", desc: "Lyssna och coacha." }
+    ] },
+  { id: "perspektiv", ch: "perspektiv", sec: "fragan", title: "Tre förklaringar till prosocialt beteende", ordered: false, hintName: "Nyckelord", src: "Bok s. 198–200",
+    steps: [
+      { label: "Biologiskt perspektiv", hint: "Medfött · evolution", desc: "Att hjälpa gjorde att gruppen överlevde. Empatin är nedärvd i generna." },
+      { label: "Behavioristiskt perspektiv", hint: "Inlärt · förstärkning", desc: "Omgivningens uppskattning har förstärkt hjälpsamheten. Stöds av Beamas experiment." },
+      { label: "Kognitivt perspektiv", hint: "Tankar · dissonans", desc: "Vi hjälper för att stärka vårt självschema och undvika kognitiv dissonans (Festinger 1957)." }
+    ] }
+];

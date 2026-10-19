@@ -310,6 +310,34 @@ input.filter{width:100%;padding:11px 16px;border-radius:999px;border:1px solid v
 .t-bridge{text-align:left;padding-left:8px;margin-top:18px;color:var(--thread,#C4473D);font-weight:800;font-size:1.3rem}
 .t-bridge span{font-family:var(--f-mono);font-size:.75rem;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
 
+/* ---------- Träna modeller ---------- */
+.mx-group{margin:6px 0}
+.mx-group>.mono{display:block;margin-top:10px}
+.mx-group .chips{margin:6px 0}
+.mx{scroll-margin-top:calc(var(--hdr) + 12px);margin-top:22px;background:var(--paper);border:1px solid var(--line);border-top:6px solid var(--c);border-radius:14px;padding:18px 20px;box-shadow:var(--sh-1)}
+.mx-head h2{font-size:clamp(1.4rem,3vw,1.9rem);margin:4px 0}
+.mx-head a.mono{text-decoration:none;color:var(--c)}
+.mx-modes{flex-wrap:wrap;border-radius:18px;margin:14px 0 6px}
+.mx-modes button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.slots{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:12px 0}
+.slots.ordered{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.slot{position:relative;display:flex;flex-direction:column;gap:6px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px}
+.slot .num{position:absolute;top:10px;right:12px;font-family:var(--f-mono);font-size:.75rem;color:var(--muted)}
+.slot .mono{color:var(--c)}
+.slot .sd{margin:0;font-size:.95rem;line-height:1.5}
+.drop{font:inherit;min-height:48px;border:2px dashed var(--line);border-radius:10px;background:var(--paper);color:var(--muted);cursor:pointer;padding:8px 10px;text-align:center;font-weight:700;transition:border-color .2s,background-color .2s}
+.drop:hover,.drop.over{border-color:var(--c)}
+.slot.filled .drop{border-style:solid;border-color:var(--c);color:var(--ink);background:color-mix(in srgb,var(--c) 12%,var(--paper))}
+.slot.ok .drop{border-style:solid;border-color:var(--good);background:var(--good-soft);color:var(--ink)}
+.slot.no .drop{border-style:solid;border-color:var(--bad);background:var(--bad-soft);color:var(--ink);text-decoration:line-through}
+.slot .fix{font-size:.9rem}
+.bank{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;min-height:44px;padding:10px;border-radius:12px;background:var(--bg)}
+@media (max-width:900px){.bank{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding:8px}.bank .word{flex:none;padding:7px 12px;font-size:.92rem}.bank{position:sticky;bottom:calc(8px + env(safe-area-inset-bottom,0px));z-index:20;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(6px);border:1px solid var(--line);box-shadow:var(--sh-2)}.bank:empty,.bank:not(:has(.word)){position:static;box-shadow:none}}
+.word{font:inherit;font-weight:700;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:999px;padding:8px 14px;cursor:grab;box-shadow:var(--sh-1);transition:transform .2s var(--ease-spring)}
+.word:hover{transform:translateY(-2px)}
+.word.sel{background:var(--ink);color:var(--bg);border-color:var(--ink);transform:translateY(-2px)}
+.fig .hint a.train{font-weight:700;color:var(--c);margin-left:6px;white-space:nowrap}
+
 footer{border-top:1px solid var(--line);padding:18px 0 40px;color:var(--muted);font-size:.88rem}
 footer .row{justify-content:space-between}
 
