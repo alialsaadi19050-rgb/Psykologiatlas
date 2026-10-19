@@ -350,6 +350,7 @@ input.filter{width:100%;padding:11px 16px;border-radius:999px;border:1px solid v
 .wslot.nara{border-color:var(--warn);background:var(--warn-soft)}
 .wslot.fel,.wslot.tom{border-color:var(--bad);background:var(--bad-soft)}
 @media (max-width:640px){.wcmp{grid-template-columns:1fr}}
+a.train{font-weight:700;color:var(--c);text-decoration:none}
 .fig .hint a.train{font-weight:700;color:var(--c);margin-left:6px;white-space:nowrap}
 
 footer{border-top:1px solid var(--line);padding:18px 0 40px;color:var(--muted);font-size:.88rem}

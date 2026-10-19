@@ -442,7 +442,8 @@ chapters: [
           4. <b>Samband eller orsak:</b> visar studien att A orsakar B, eller bara att de hänger ihop?<br>
           5. <b>Etik:</b> fick deltagarna veta vad det handlade om? Kunde någon ta skada?<br>
           <i>Boken hänvisar till sitt avsnitt 1.5 Kritiskt tänkande. Det avsnittet har jag inte fått, så de här frågorna är mina egna.</i></div>
-        <p class="task">Hur har din femte fas varit? Har du testat olika roller? Har du känt rollförvirring?</p>`,
+        <p class="task">Hur har din femte fas varit? Har du testat olika roller? Har du känt rollförvirring?</p>
+        <p><a class="train" href="#/k/identitet/modeller/erikson">Träna på Eriksons femte fas →</a></p>`,
       check: [
         { q: "Vilken ålder gäller Eriksons femte fas, och vad heter krisen?", a: "13–19 år. Krisen heter identitet eller rollförvirring." },
         { q: "Varför kan Rutter ha kommit fram till något annat än Kidwell?", a: "Rutter frågade lärare och föräldrar, inte ungdomarna själva. En identitetskris sker inombords och syns kanske inte för vuxna. Hans urval var också bara 14–15 år. (Egen slutsats, inte från boken.)" },
@@ -1622,6 +1623,19 @@ window.ATLAS.models = [
       { label: "Det subjektiva självet", hint: "7–15 mån", desc: "Knyter an till den som tar hand om en och uppfattar samspelet, ett växelspel med föräldrarna." },
       { label: "Det verbala självet", hint: "16 mån–3 år", desc: "Språket gör att barnet kan hantera sig själv. Symbollekar, säger sitt namn och känner igen spegelbilden." },
       { label: "Det berättande självet", hint: "4 år –", desc: "Tal och minne gör att barnet kan berätta sammanhängande historier. Samtal formar identiteten." }
+    ] },
+  { id: "erikson", ch: "identitet", sec: "erikson", title: "Eriksons femte fas", ordered: false, qa: true, hintName: "Fråga", src: "Bok s. 174–175, 185",
+    steps: [
+      { label: "Psykosocial utveckling", hint: "Vad heter Eriksons teori", desc: "Vi utvecklas genom hela livet med hjälp av viktiga människor omkring oss och genom att gå igenom kriser." },
+      { label: "13–19 år", hint: "Vilken ålder gäller den femte fasen", desc: "Då blir identiteten fast och konsistent, enligt Erikson." },
+      { label: "Identitet eller rollförvirring", hint: "Vad heter krisen i femte fasen", desc: "Krisen som tonåringen går igenom i den femte fasen." },
+      { label: "Testa och utforska olika identiteter", alt: ["testa roller", "utforska roller", "prova olika roller"], hint: "Vad är viktigt att göra i krisen", desc: "Den unga behöver pröva många olika roller och identiteter." },
+      { label: "En fast och konsistent identitet", hint: "Vad är målet med femte fasen", desc: "Identiteten blir fast och hänger ihop." },
+      { label: "Ungdomar i två ursprungsfolk i USA", alt: ["indianstammar", "indianer", "två indianstammar"], hint: "Vilka observerade Erikson", desc: "Där såg Erikson själv identitetskrisen (boken skriver \"indianstammar\")." },
+      { label: "Kidwell (1995)", hint: "Vilken studie stödjer Erikson", desc: "82 studenter 14–17 år. De utan fast identitet mådde sämre, var mer förvirrade och olyckliga." },
+      { label: "Rutter (1976)", hint: "Vilken studie talar emot Erikson", desc: "2 030 elever 14–15 år. Lärare och föräldrar ansåg att bara ett fåtal hade en identitetskris." },
+      { label: "Fasta faser och strikt åldersindelning", hint: "Vilken kritik har teorin fått", desc: "Få studier stödjer teorin, och den kritiseras för att faserna och åldrarna är för fasta." },
+      { label: "Närhet och intimitet", hint: "Vad är viktigt i tidig vuxenålder", desc: "Målen är ofta utbildning, arbete och en parrelation, och att känna sig behövd." }
     ] },
   { id: "marcia", ch: "identitet", sec: "marcia", title: "Marcias fyra identitetsstatusar", ordered: false, hintName: "Utforskning / engagemang", src: "Bok s. 176–177",
     steps: [

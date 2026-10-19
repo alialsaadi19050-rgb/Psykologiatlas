@@ -545,13 +545,13 @@
     let placed = Array(n).fill(null), sel = null, checked = false, bank = shuffle([...Array(n).keys()]);
     const draw = () => {
       const free = bank.filter(k => !placed.includes(k));
-      body.innerHTML = `<p class="muted">${byDesc ? "Läs beskrivningen och placera rätt namn i varje ruta." : `Varje ruta visar en ledtråd (${esc(m.hintName.toLowerCase())}). Placera rätt namn i varje ruta.`} Tryck på ett namn och sedan på en ruta, eller dra namnet dit.</p>
+      body.innerHTML = `<p class="muted">${byDesc ? "Läs beskrivningen och placera rätt namn i varje ruta." : m.qa ? "Varje ruta är en fråga. Placera rätt svar i varje ruta." : `Varje ruta visar en ledtråd (${esc(m.hintName.toLowerCase())}). Placera rätt namn i varje ruta.`} Tryck på ett namn och sedan på en ruta, eller dra namnet dit.</p>
         <div class="slots ${m.ordered && !byDesc ? "ordered" : ""}">${slotOrder.map((s, k) => {
           const p = placed[s], st = m.steps[s];
           const cls = checked ? (p === s ? "ok" : "no") : p != null ? "filled" : "";
           return `<div class="slot ${cls}" data-s="${s}">
             ${m.ordered && !byDesc ? `<span class="num">${k + 1}</span>` : ""}
-            <span class="mono">${byDesc ? esc(m.hintName) + " · ?" : esc(st.hint)}</span>
+            <span class="mono">${byDesc ? esc(m.hintName) + " · ?" : esc(st.hint) + (m.qa ? "?" : "")}</span>
             ${byDesc ? `<p class="sd">${esc(st.desc)}</p>` : ""}
             <button type="button" class="drop" data-s="${s}" aria-label="Ruta: ${esc(byDesc ? st.desc : st.hint)}">${p != null ? esc(m.steps[p].label) : sel != null ? "Placera här" : "Tom ruta"}</button>
             ${checked && p !== s ? `<span class="fix">Rätt: <b>${esc(st.label)}</b></span>` : ""}
@@ -624,6 +624,12 @@
     return me.typo && me.score < 1 ? "nara" : "ok";
   }
 
+  // Bästa betyget av facit och eventuella godkända alternativ (alt) för steget
+  const RANK = { ok: 3, nara: 2, fel: 1, tom: 0 };
+  const gradeStep = (answer, st, labels) => [st.label, ...(st.alt || [])]
+    .map(l => gradeName(answer, l, labels.map(x => x === st.label ? l : x)))
+    .sort((x, y) => RANK[y] - RANK[x])[0];
+
   function writeModel(body, m, record) {
     const n = m.steps.length;
     const order = m.ordered ? [...Array(n).keys()] : shuffle([...Array(n).keys()]);
@@ -632,15 +638,15 @@
     const draw = () => {
       body.innerHTML = `<p class="muted">Skriv namnet på varje steg i den tomma rutan. Vill du träna mer kan du också skriva vad som händer i steget. Tryck sedan <b>Jämför</b> och se ditt svar bredvid facit.</p>
         <div class="wslots">${order.map((s, k) => {
-          const st = m.steps[s], g = compared ? (own[s] ? "ok" : gradeName(ans[s] || "", st.label, labels)) : "";
+          const st = m.steps[s], g = compared ? (own[s] ? "ok" : gradeStep(ans[s] || "", st, labels)) : "";
           return `<div class="wslot ${g}" data-s="${s}">
-            <span class="mono">${m.ordered ? `${k + 1} · ` : ""}${esc(st.hint)}</span>
+            <span class="mono">${m.ordered ? `${k + 1} · ` : ""}${esc(st.hint)}${m.qa ? "?" : ""}</span>
             ${compared ? `
               <div class="wcmp"><div><small class="mono">Ditt svar</small><p>${ans[s] ? esc(ans[s]) : "<i class='muted'>(tomt)</i>"}</p>${expl[s] ? `<p class="muted">${esc(expl[s])}</p>` : ""}</div>
               <div><small class="mono">Facit</small><p><b>${esc(st.label)}</b></p><p class="muted">${esc(st.desc)}</p></div></div>
               <div class="wverdict">${g === "ok" ? "✓ Rätt" : g === "nara" ? "✓ Rätt, men kolla stavningen" : g === "tom" ? "Inget svar" : "✗ Inte rätt"}
                 ${g === "fel" || g === "tom" ? `<button type="button" class="mini" data-own="${s}">Jag hade rätt</button>` : own[s] ? `<button type="button" class="mini" data-own="${s}">Ångra</button>` : ""}</div>`
-            : `<input class="win" type="text" data-s="${s}" value="${esc(ans[s] || "")}" placeholder="Skriv namnet …" autocomplete="off" autocapitalize="sentences" aria-label="Namn för ${esc(st.hint)}">
+            : `<input class="win" type="text" data-s="${s}" value="${esc(ans[s] || "")}" placeholder="${m.qa ? "Skriv svaret …" : "Skriv namnet …"}" autocomplete="off" autocapitalize="sentences" aria-label="Namn för ${esc(st.hint)}">
               <textarea class="wex" data-s="${s}" rows="2" placeholder="Vad händer här? (valfritt)" aria-label="Förklaring för ${esc(st.hint)}">${esc(expl[s] || "")}</textarea>`}
           </div>`;
         }).join("")}</div>
@@ -648,7 +654,7 @@
           ? `<button class="btn" type="button" id="mxAgain">↺ Skriv igen</button><button class="btn ghost" type="button" id="mxEdit">Ändra mina svar</button>`
           : `<button class="btn" type="button" id="mxCmp">Jämför med facit</button>`}<span class="score" id="mxScore"></span></div>`;
       if (compared) {
-        const right = order.filter(s => own[s] || ["ok", "nara"].includes(gradeName(ans[s] || "", m.steps[s].label, labels))).length;
+        const right = order.filter(s => own[s] || ["ok", "nara"].includes(gradeStep(ans[s] || "", m.steps[s], labels))).length;
         $("#mxScore", body).textContent = `${right} av ${n} rätt${right === n ? " 🎉" : ""}`;
         record(Math.round(100 * right / n));
         $$("[data-own]", body).forEach(b => b.onclick = () => { const s = +b.dataset.own; own[s] = !own[s]; draw(); });
@@ -706,7 +712,7 @@
       const opts = shuffle([q.s, ...shuffle([...Array(n).keys()].filter(k => k !== q.s)).slice(0, 3)]);
       body.innerHTML = `<div class="qq"><div class="fc-meta"><span class="mono">Fråga ${i + 1} av ${qs.length}</span><span class="score">${score} rätt</span></div>
         <div class="bar" style="margin:8px 0 14px"><i style="width:${100 * i / qs.length}%"></i></div>
-        <p class="q">${q.by === "desc" ? `Vilket steg i modellen beskrivs?<br><span class="muted">"${esc(st.desc)}"</span>` : `${esc(m.hintName)}: <b>${esc(st.hint)}</b>. Vad heter steget?`}</p>
+        <p class="q">${q.by === "desc" ? `${m.qa ? "Vilket svar passar beskrivningen?" : "Vilket steg i modellen beskrivs?"}<br><span class="muted">"${esc(st.desc)}"</span>` : m.qa ? `${esc(st.hint)}?` : `${esc(m.hintName)}: <b>${esc(st.hint)}</b>. Vad heter steget?`}</p>
         <div class="opts">${opts.map(k => `<button class="opt" data-k="${k}">${esc(m.steps[k].label)}</button>`).join("")}</div><div id="mxFb"></div></div>`;
       $$(".opt", body).forEach(b => b.onclick = () => {
         const ok = +b.dataset.k === q.s; if (ok) score++;
