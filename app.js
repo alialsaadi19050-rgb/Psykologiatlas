@@ -499,7 +499,7 @@
   function modelsPage(active) {
     const groups = READY.filter(c => modelsOf(c.id).length);
     app.innerHTML = `<div class="page c-alla"><span class="mono">Psykologi · alla kapitel · ${MODELS.length} modeller</span><h1>Träna <em>modellerna</em></h1>
-      <p class="lead">Fyll i de tomma modellerna, sätt stegen i rätt ordning och kör snabbquiz. Så lär du dig Sterns stadier, Marcias statusar, Tuckman och alla andra modeller utantill.</p>
+      <p class="lead">Fyll i de tomma modellerna, skriv själv och jämför med facit, sätt stegen i rätt ordning och kör snabbquiz. Så lär du dig Sterns stadier, Marcias statusar, Tuckman och alla andra modeller utantill.</p>
       <div id="mview"></div></div>`;
     modelsView($("#mview"), MODELS, active, id => `#/modeller/${id}`, groups);
   }
@@ -519,7 +519,7 @@
   }
 
   function renderModel(box, m) {
-    const modes = [["fyll", "Fyll i modellen"], ["beskr", "Para ihop beskrivningar"]]
+    const modes = [["fyll", "Fyll i modellen"], ["skriv", "Skriv själv"], ["beskr", "Para ihop beskrivningar"]]
       .concat(m.ordered ? [["ordning", "Sätt i ordning"]] : []).concat([["quiz", "Snabbquiz"]]);
     let mode = modes.some(x => x[0] === S.mmode) ? S.mmode : "fyll";
     const best = S.models[m.id];
@@ -534,7 +534,7 @@
     });
     const body = $("#mxBody", box);
     const record = pc => { S.models[m.id] = Math.max(S.models[m.id] || 0, pc); save(); };
-    const run = () => mode === "ordning" ? orderModel(body, m, record) : mode === "quiz" ? quizModel(body, m, record) : fillModel(body, m, mode === "beskr", record);
+    const run = () => mode === "ordning" ? orderModel(body, m, record) : mode === "quiz" ? quizModel(body, m, record) : mode === "skriv" ? writeModel(body, m, record) : fillModel(body, m, mode === "beskr", record);
     run();
   }
 
@@ -583,6 +583,86 @@
         $("#mxShow", body).onclick = () => { placed = [...Array(n).keys()]; checked = true; draw(); $("#mxScore", body).textContent = "Facit visas"; };
         $("#mxReset", body).onclick = () => { placed = Array(n).fill(null); sel = null; draw(); };
       } else $("#mxAgain", body).onclick = () => fillModel(body, m, byDesc, record);
+    };
+    draw();
+  }
+
+  // Skriv själv: skriv namnet (och gärna vad som händer) i tomma rutor och jämför med facit
+  const STOP = new Set(["det", "den", "och", "med", "sig", "mot", "andras", "själv", "självet", "fasen", "fas", "ledarstil", "ledare", "identitet", "anknytning", "perspektiv", "vid", "om", "en", "ett", "att", "till"]);
+  const words = t => t.toLowerCase().replace(/[^a-zåäöéü0-9 ]+/g, " ").split(/\s+/).filter(Boolean);
+  const lev = (a, b) => {
+    const d = Array.from({ length: a.length + 1 }, (_, i) => [i]);
+    for (let j = 1; j <= b.length; j++) d[0][j] = j;
+    for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++)
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    return d[a.length][b.length];
+  };
+  // Svaret jämförs med alla steg i modellen. Det räknas som rätt om det passar bäst ihop med
+  // just det här steget och minst hälften av stegets viktiga ord finns med (små stavfel är okej).
+  const sigWords = t => words(t).filter(w => !STOP.has(w) && w.length >= 3);
+  // 0 = exakt, 0.5 = del av sammansatt ord eller samma början, annars antal bokstäver som skiljer
+  const near = (w, k) => w === k ? 0 : (w.length >= 5 && (k.startsWith(w) || k.endsWith(w) || (k.startsWith(w.slice(0, 5)) && Math.abs(w.length - k.length) <= 3))) ? .5 : lev(w, k);
+  const tol = k => k.length > 7 ? 2 : 1;
+  function match(mine, label, all) {
+    const keys = sigWords(label).length ? sigWords(label) : words(label);
+    const dist = k => Math.min(...mine.map(w => near(w, k)));
+    let score = keys.reduce((sum, k) => sum + (dist(k) === 0 ? 1 : dist(k) === .5 ? .9 : dist(k) <= tol(k) ? .8 : 0), 0) / keys.length;
+    const main = [...keys].sort((x, y) => y.length - x.length)[0];
+    const unique = !all.some(l => l !== label && sigWords(l).some(k2 => near(main, k2) <= tol(main)));
+    if (unique && dist(main) <= tol(main)) score = Math.max(score, dist(main) ? .65 : .7);
+    return { score, typo: keys.some(k => dist(k) >= 1 && dist(k) <= tol(k)) };
+  }
+  function gradeName(answer, label, all) {
+    const mine = words(answer).filter(w => !STOP.has(w));
+    if (!words(answer).length) return "tom";
+    if (!mine.length) return "fel";
+    all = all || [label];
+    const same = l => { const x = sigWords(l), y = sigWords(label); return x.length === y.length && x.every((w, i) => w.startsWith(y[i]) || y[i].startsWith(w)); };
+    const me = match(mine, label, all);
+    const rival = Math.max(0, ...all.filter(l => !same(l)).map(l => match(mine, l, all).score));
+    if (me.score < .5 || rival > me.score) return "fel";
+    return me.typo && me.score < 1 ? "nara" : "ok";
+  }
+
+  function writeModel(body, m, record) {
+    const n = m.steps.length;
+    const order = m.ordered ? [...Array(n).keys()] : shuffle([...Array(n).keys()]);
+    const ans = {}, expl = {}, own = {}, labels = m.steps.map(x => x.label);
+    let compared = false;
+    const draw = () => {
+      body.innerHTML = `<p class="muted">Skriv namnet på varje steg i den tomma rutan. Vill du träna mer kan du också skriva vad som händer i steget. Tryck sedan <b>Jämför</b> och se ditt svar bredvid facit.</p>
+        <div class="wslots">${order.map((s, k) => {
+          const st = m.steps[s], g = compared ? (own[s] ? "ok" : gradeName(ans[s] || "", st.label, labels)) : "";
+          return `<div class="wslot ${g}" data-s="${s}">
+            <span class="mono">${m.ordered ? `${k + 1} · ` : ""}${esc(st.hint)}</span>
+            ${compared ? `
+              <div class="wcmp"><div><small class="mono">Ditt svar</small><p>${ans[s] ? esc(ans[s]) : "<i class='muted'>(tomt)</i>"}</p>${expl[s] ? `<p class="muted">${esc(expl[s])}</p>` : ""}</div>
+              <div><small class="mono">Facit</small><p><b>${esc(st.label)}</b></p><p class="muted">${esc(st.desc)}</p></div></div>
+              <div class="wverdict">${g === "ok" ? "✓ Rätt" : g === "nara" ? "✓ Rätt, men kolla stavningen" : g === "tom" ? "Inget svar" : "✗ Inte rätt"}
+                ${g === "fel" || g === "tom" ? `<button type="button" class="mini" data-own="${s}">Jag hade rätt</button>` : own[s] ? `<button type="button" class="mini" data-own="${s}">Ångra</button>` : ""}</div>`
+            : `<input class="win" type="text" data-s="${s}" value="${esc(ans[s] || "")}" placeholder="Skriv namnet …" autocomplete="off" autocapitalize="sentences" aria-label="Namn för ${esc(st.hint)}">
+              <textarea class="wex" data-s="${s}" rows="2" placeholder="Vad händer här? (valfritt)" aria-label="Förklaring för ${esc(st.hint)}">${esc(expl[s] || "")}</textarea>`}
+          </div>`;
+        }).join("")}</div>
+        <div class="row">${compared
+          ? `<button class="btn" type="button" id="mxAgain">↺ Skriv igen</button><button class="btn ghost" type="button" id="mxEdit">Ändra mina svar</button>`
+          : `<button class="btn" type="button" id="mxCmp">Jämför med facit</button>`}<span class="score" id="mxScore"></span></div>`;
+      if (compared) {
+        const right = order.filter(s => own[s] || ["ok", "nara"].includes(gradeName(ans[s] || "", m.steps[s].label, labels))).length;
+        $("#mxScore", body).textContent = `${right} av ${n} rätt${right === n ? " 🎉" : ""}`;
+        record(Math.round(100 * right / n));
+        $$("[data-own]", body).forEach(b => b.onclick = () => { const s = +b.dataset.own; own[s] = !own[s]; draw(); });
+        $("#mxAgain", body).onclick = () => writeModel(body, m, record);
+        $("#mxEdit", body).onclick = () => { compared = false; draw(); };
+      } else {
+        const ins = $$(".win", body);
+        ins.forEach((inp, k) => {
+          inp.oninput = () => { ans[+inp.dataset.s] = inp.value; };
+          inp.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); (ins[k + 1] || $("#mxCmp", body)).focus(); } };
+        });
+        $$(".wex", body).forEach(t => t.oninput = () => { expl[+t.dataset.s] = t.value; });
+        $("#mxCmp", body).onclick = () => { compared = true; draw(); };
+      }
     };
     draw();
   }
